@@ -171,6 +171,11 @@ export function attachSockets(io, { manager, reports, log, dict, rates = {} }) {
     socket.on('room:start', inRoom((room, id) => room.start(id)));
     socket.on('profile:update', inRoom((room, id, p) => room.updateProfile(id, { name: p.name, avatar: p.avatar ? cleanAvatar(p.avatar) : undefined })));
     socket.on('vote:kick', inRoom((room, id, { playerId }) => room.startVote(id, String(playerId))));
+    // ¿Está mirando la pestaña? Si alguien que juega no, la partida se pausa.
+    socket.on('presence', (p) => {
+      const { room, id } = ctx();
+      if (room && id && limits.typing.allow(`p:${socket.id}`)) room.setVisible(id, p?.visible !== false);
+    });
     socket.on('vote:cast', inRoom((room, id, { voteId, yes }) => room.castVote(id, String(voteId), Boolean(yes))));
 
     socket.on('game:submit', inRoom((room, id, { text }) => {

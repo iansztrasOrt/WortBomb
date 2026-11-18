@@ -218,6 +218,23 @@ async function leave() {
 // ---------------------------------------------------------------- eventos del servidor
 const socket = net.connect();
 let wasConnected = false;
+// ¿Estoy mirando la pestaña? (visible y con foco). Si alguien que juega no, el servidor pausa.
+let presenceTimer = 0;
+let lastPresence = null;
+function sendPresence(force = false) {
+  clearTimeout(presenceTimer);
+  presenceTimer = setTimeout(() => {
+    const visible = !document.hidden && document.hasFocus();
+    if (!force && visible === lastPresence) return;
+    lastPresence = visible;
+    if (net.socket?.connected && S.room) net.socket.emit('presence', { visible });
+  }, 120);
+}
+document.addEventListener('visibilitychange', () => sendPresence());
+window.addEventListener('focus', () => sendPresence());
+window.addEventListener('blur', () => sendPresence());
+window.addEventListener('pageshow', () => sendPresence(true));
+
 socket.on('connect', () => {
   if (wasConnected) toast('¡Conexión recuperada!');
   wasConnected = true;
@@ -227,6 +244,7 @@ socket.on('disconnect', () => toast('Se cortó la conexión. Reintentando…', {
 
 socket.on('room:state', (state) => {
   S.room = state;
+  sendPresence(true);
   net.offset = Number.isFinite(state.serverNow) && !net.rtt ? state.serverNow - Date.now() : net.offset;
   history.replaceState(null, '', `/?sala=${state.code}`);
   const prev = viewName;
@@ -269,6 +287,7 @@ socket.on('vote:update', ({ vote }) => {
 
 socket.on('game:start', ({ game }) => {
   if (!S.room) return;
+  sendPresence(true);
   S.room.game = game;
   S.room.status = 'playing';
   S.room.chat.dead = [];
@@ -318,6 +337,25 @@ socket.on('game:eliminated', (ev) => {
   if (ev.playerId === S.room?.you) announce('Quedaste eliminado.');
 });
 socket.on('game:announce', (ev) => view?.on?.('announce', ev));
+socket.on('game:paused', ({ away, pausedAt }) => {
+  const g = S.room?.game;
+  if (!g) return;
+  g.paused = true;
+  g.pausedAt = pausedAt;
+  S.room.away = away;
+  view?.on?.('paused', { away });
+});
+socket.on('game:resumed', ({ turn, startedAt, suddenAt }) => {
+  const g = S.room?.game;
+  if (!g) return;
+  g.paused = false;
+  g.pausedAt = null;
+  g.turn = turn;
+  g.startedAt = startedAt;
+  g.suddenAt = suddenAt;
+  S.room.away = [];
+  view?.on?.('resumed');
+});
 socket.on('game:countdown', ({ suddenAt }) => {
   const g = S.room?.game;
   if (!g) return;

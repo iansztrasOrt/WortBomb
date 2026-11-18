@@ -72,9 +72,10 @@ export function createArena(root) {
     center.style.width = `${hw * 2}px`;
     center.style.height = `${hh * 2}px`;
     center.style.transform = `translate(-50%, calc(-50% + ${cy}px))`;
-    const syl = Math.max(20, Math.min(86, hh * 0.62, hw * 0.48));
+    const syl = Math.max(20, Math.min(80, hh * 0.52, hw * 0.45));
     center.style.setProperty('--syl', `${syl}px`);
-    center.style.setProperty('--live', `${Math.max(12, Math.min(24, syl * 0.36))}px`);
+    // Lo que escribe el jugador activo: bien grande (casi tanto como la sílaba).
+    center.style.setProperty('--live', `${Math.max(16, Math.min(44, syl * 0.66, hw * 0.22))}px`);
     center.classList.toggle('tight', hh < 72);
     center.classList.toggle('tiny', hh < 44);
 

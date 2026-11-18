@@ -103,6 +103,7 @@ export class Room {
       members: this.members_(), game: this.game ? this.game.snapshot() : null,
       chat: { main: this.chat.main, dead: dead || this.status !== 'playing' ? this.chat.dead : [] },
       votes: [...this.votes.values()].map((v) => this.voteView(v)), serverNow: this.now(),
+      away: this.game?.paused ? this.game.aliveSeats.filter((s) => { const m = this.member(s.id); return !m || !m.connected || m.visible === false; }).map((s) => ({ id: s.id, name: s.name, offline: !this.member(s.id)?.connected })) : [],
     };
   }
 
@@ -123,7 +124,7 @@ export class Room {
     for (let i = 2; taken.has(finalName.toLowerCase()); i += 1) finalName = `${nick.slice(0, ROOM_LIMITS.nameMax - 2)} ${i}`;
     const m = {
       id: `m${++this.seq}${crypto.randomBytes(2).toString('hex')}`, token, name: finalName, avatar: cleanAvatar(avatar),
-      ready: false, connected: true, joinedAt: this.now(), ip, offTurn: 0,
+      ready: false, connected: true, visible: true, joinedAt: this.now(), ip, offTurn: 0,
     };
     this.members.set(m.id, m);
     if (!this.leaderId) this.leaderId = m.id;
@@ -149,6 +150,7 @@ export class Room {
     if (this.leaderId === id) this.transferLeader();
     this.broadcastMembers();
     this.checkVotes();
+    this.updatePresence();
   }
 
   transferLeader() {
@@ -180,6 +182,51 @@ export class Room {
       this.system(`${m.name} se desconectó…`);
     }
     this.broadcastMembers();
+    this.updatePresence();
+  }
+
+  /** El cliente avisa si está mirando la pestaña (visible y con foco). */
+  setVisible(id, visible) {
+    const m = this.member(id);
+    if (!m || m.visible === Boolean(visible)) return;
+    m.visible = Boolean(visible);
+    this.updatePresence();
+  }
+
+  /**
+   * La partida solo sigue si TODOS los que juegan (vivos) están mirando la pestaña y conectados.
+   * Si falta alguno, se pausa (se congela la mecha y el reloj); cuando vuelven todos, sigue.
+   */
+  updatePresence() {
+    const g = this.game;
+    if (!g || this.status !== 'playing' || g.state !== 'playing') {
+      this.awayKey = '';
+      return;
+    }
+    const away = g.aliveSeats.filter((s) => {
+      const m = this.member(s.id);
+      return !m || !m.connected || m.visible === false;
+    }).map((s) => ({ id: s.id, name: s.name, offline: !this.member(s.id)?.connected }));
+    const key = away.map((a) => `${a.id}:${a.offline}`).join(',');
+    if (away.length) {
+      const now = this.now();
+      if (g.pause(now)) {
+        clearTimeout(this.timers.turn);
+        for (const t of this.timers.clock) clearTimeout(t);
+        this.system(`⏸ Pausa: no están todos en la web (falta ${away.map((a) => a.name).join(', ')}).`);
+      }
+      if (key !== this.awayKey) this.emit('all', 'game:paused', { away, pausedAt: g.pausedAt, serverNow: now });
+      this.awayKey = key;
+      return;
+    }
+    if (g.paused) {
+      g.resume(this.now());
+      this.awayKey = '';
+      this.system('▶ Están todos: ¡sigue la partida!');
+      this.emit('all', 'game:resumed', { turn: g.turn, startedAt: g.startedAt, suddenAt: g.suddenAt, serverNow: this.now() });
+      if (g.turn) this.armTurnTimer(g.turn);
+      this.armClock();
+    }
   }
 
   /** 5 s de gracia para el jugador con la bomba que se desconectó; si no vuelve, le explota. */
@@ -271,6 +318,8 @@ export class Room {
     this.system(`¡Arranca la partida! ${players.length} jugadores. Recuerden: no se puede repetir ninguna palabra.`);
     this.apply(events);
     this.armClock();
+    this.awayKey = '';
+    this.updatePresence();
     this.broadcastMembers();
     return { ok: true };
   }
@@ -328,6 +377,7 @@ export class Room {
           this.emit('all', 'game:eliminated', ev);
           if (ev.reason === 'exploded') this.system(`💥 ${m?.name} quedó eliminado (puesto ${ev.place}).`);
           else if (ev.reason === 'left' || ev.reason === 'disconnected') this.system(`${m?.name} abandonó la partida.`);
+          queueMicrotask(() => this.updatePresence()); // los eliminados ya no frenan la partida
           break;
         }
         case 'announce':

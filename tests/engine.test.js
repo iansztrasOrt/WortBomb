@@ -444,6 +444,39 @@ describe('turnos', () => {
 });
 
 // ---------------------------------------------------------------- vidas
+describe('pausa (no están todos en la web)', () => {
+  it('congela la mecha y el reloj; al seguir, todo se corre lo que duró la pausa', () => {
+    const { g, now } = newGame({ n: 3, settings: { suddenDeathMinutes: 5 }, rng: seq(0.5) });
+    const { deadline, startedAt } = g.turn;
+    const gameStart = g.startedAt;
+    const sudden = g.suddenAt;
+    now.advance(2000);
+    expect(g.pause(now())).toBe(true);
+    now.advance(60000); // un minuto en pausa
+    expect(g.tick(now())).toEqual([]); // no explota en pausa
+    expect(g.clock(now())).toEqual([]);
+    expect(g.submit(g.turn.playerId, 'casa', now()).result.reason).toBe('paused');
+    expect(g.used.size).toBe(0);
+    expect(g.resume(now())).toBe(60000);
+    expect(g.turn.deadline).toBe(deadline + 60000);
+    expect(g.turn.startedAt).toBe(startedAt + 60000);
+    expect(g.startedAt).toBe(gameStart + 60000);
+    expect(g.suddenAt).toBe(sudden + 60000);
+    expect(g.submit(g.turn.playerId, 'casa', now()).result.ok).toBe(true);
+  });
+
+  it('si alguien se va durante la pausa, el turno nuevo arranca "en el momento de la pausa"', () => {
+    const { g, now } = newGame({ n: 3, rng: seq(0.5) });
+    g.pause(now());
+    const pausedAt = g.pausedAt;
+    now.advance(30000);
+    g.removePlayer(g.turn.playerId, 'left', now());
+    expect(g.turn.startedAt).toBe(pausedAt);
+    g.resume(now());
+    expect(g.turn.startedAt).toBe(pausedAt + 30000);
+  });
+});
+
 describe('vidas', () => {
   it('no hay forma de ganar vidas: acertar nunca suma, aunque la palabra use muchas letras', () => {
     const { g, now } = newGame({ n: 2, settings: { startLives: 2 } });

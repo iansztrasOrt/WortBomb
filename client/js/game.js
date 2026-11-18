@@ -139,7 +139,8 @@ export function mountGame(app, ctx) {
     raf = requestAnimationFrame(frame);
     const game = g();
     if (!game) return;
-    const sn = net.serverNow();
+    // En pausa todo queda congelado en el instante en que se pausó.
+    const sn = game.paused && game.pausedAt ? game.pausedAt : net.serverNow();
     if (game.startedAt) ctx.setClock(fmtTime((game.state === 'playing' ? sn : (game.results ? game.startedAt + game.results.durationMs : sn)) - game.startedAt));
     // Cuenta regresiva de la muerte súbita (el último minuto) y chip fijo cuando ya empezó.
     if (game.state === 'playing' && game.sudden) ctx.setCountdown({ mode: 'sudden' });
@@ -182,7 +183,7 @@ export function mountGame(app, ctx) {
     if (res.ok) {
       wordBox.classList.add('okflash');
       setTimeout(() => wordBox.classList.remove('okflash'), 300);
-    } else if (res.reason === 'late' || res.reason === 'rate' || res.reason === 'burst') {
+    } else if (['late', 'rate', 'burst', 'paused'].includes(res.reason)) {
       showError(res.message || 'No se pudo enviar.');
     }
   }
@@ -286,6 +287,14 @@ export function mountGame(app, ctx) {
       ctx.setDanger(ev.level, true);
       toast(`🔥 ${ev.text}`);
     },
+    paused({ away }) {
+      showPause(away);
+    },
+    resumed() {
+      hidePause();
+      renderTurnInfo();
+      toast('▶ ¡Están todos! Sigue la partida.');
+    },
     countdown() {
       toast('⏳ ¡En 1 minuto empieza la MUERTE SÚBITA!');
     },
@@ -328,8 +337,34 @@ export function mountGame(app, ctx) {
     }, ms);
   });
 
+  // ---- pausa: alguien que juega no está mirando la pestaña
+  const pauseBox = el('div', { class: 'pause-box', role: 'alertdialog', 'aria-live': 'assertive', hidden: true });
+  arena.el.append(pauseBox);
+  function showPause(away = []) {
+    const leader = S.room.leaderId === me();
+    const imAway = away.some((a) => a.id === me());
+    pauseBox.hidden = false;
+    pauseBox.replaceChildren(
+      el('div', { class: 'pause-card' },
+        el('b', { class: 'pause-title', text: '⏸ ¡Pausa!' }),
+        el('p', { class: 'pause-text', text: 'No están todos en la web. La partida sigue cuando vuelvan todos a la pestaña.' }),
+        el('ul', { class: 'pause-list' }, ...away.map((a) => el('li', {}, a.offline ? '📡 ' : '👀 ', el('b', { text: a.id === me() ? 'Vos' : a.name }), a.offline ? ' se desconectó' : ' no está mirando',
+          leader && a.id !== me() ? el('button', { class: 'btn small ghost', type: 'button', text: 'Expulsar', onclick: async () => {
+            if (!window.confirm(`¿Expulsar a ${a.name}?`)) return;
+            const res = await ctx.net.call('room:kick', { playerId: a.id });
+            if (!res.ok) toast(res.error, { bad: true });
+          } }) : null))),
+        imAway ? el('p', { class: 'small', text: 'Tocá acá o volvé a esta pestaña para seguir.' }) : null));
+    arena.bomb.el.classList.add('frozen');
+  }
+  function hidePause() {
+    pauseBox.hidden = true;
+    arena.bomb.el.classList.remove('frozen');
+  }
+
   // primer dibujo (al entrar o reconectar en plena partida)
   setSudden(Boolean(g().sudden && g().state === 'playing'));
+  if (g().paused) showPause(S.room.away || []);
   requestAnimationFrame(() => {
     renderSeats();
     placeBomb(false);

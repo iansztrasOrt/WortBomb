@@ -437,3 +437,19 @@ body.sudden .topbar { background: linear-gradient(90deg, rgba(224, 36, 43, .18),
 .scene .s-word { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); font: 800 26px var(--display); }
 .scene .s-word mark { background: var(--spark); border-radius: 6px; padding: 0 2px; }
 .scene .s-big { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 800 56px/1 var(--display); color: #fff; -webkit-text-stroke: 3px #5a0a0e; paint-order: stroke fill; text-align: center; }
+
+/* ---------- lo que escriben los demás, bien visible ---------- */
+.center .live { font-weight: 800; letter-spacing: .02em; line-height: 1.15; color: var(--ink); }
+.center .live:not(:empty) { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: .05em .35em; max-width: 100%; }
+.center .live.ok:not(:empty) { border-color: var(--good); }
+.center .live.bad:not(:empty) { border-color: var(--bad); }
+
+/* ---------- pausa: no están todos en la web ---------- */
+.pause-box { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 12px; background: rgba(27, 20, 40, .55); backdrop-filter: blur(3px); animation: fadeIn .2s; }
+.pause-card { background: var(--card); border: 3px solid var(--ink); border-radius: 20px; box-shadow: 0 6px 0 var(--ink); padding: 16px 20px; max-width: min(420px, 100%); display: grid; gap: 8px; text-align: center; }
+.pause-title { font: 800 clamp(26px, 5vw, 40px)/1 var(--display); }
+.pause-text { font-weight: 700; color: var(--ink-2); }
+.pause-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-weight: 700; }
+.pause-list li { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.bomb.frozen .bomb-inner { animation: none !important; }
+.bomb.frozen .spark { display: none; }

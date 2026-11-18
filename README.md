@@ -30,6 +30,7 @@ Tiene identidad visual propia: no usa assets, logos ni textos de otros juegos, s
 | Sin tildes | `cancion` = `canción`. La **ñ** sí cuenta como letra distinta (`año` ≠ `ano`). |
 | Si te explota | Perdés una vida (no hay forma de recuperarla) y la bomba pasa al siguiente **con la misma sílaba**. Si él tampoco la sabe, sale una sílaba nueva. Sin vidas, quedás eliminado y mirás desde la tribuna, con un chat propio para no spoilear. |
 | La mecha se acorta, de a poco | Con el **tiempo de partida**: un 5 % menos por minuto. Con **cada vida perdida** en la ronda: un 3 % menos, y un 5 % más por cada eliminado. Arriba se ve el **nivel de peligro** (1 a 10). |
+| Todos mirando | La partida solo corre si **todos los que juegan están mirando la pestaña**. Si alguien cambia de pestaña, minimiza o pasa a otra ventana, se **pausa para todos** (se congelan la mecha y el reloj) con el cartel "No están todos en la web", que dice quién falta. Cuando vuelven todos, sigue desde donde quedó. Si alguien se desconecta y no vuelve en 30 s, queda eliminado y la partida sigue. El líder puede expulsar desde el cartel. |
 | Muerte súbita | Si la partida se alarga, el último minuto aparece una **cuenta regresiva**. Al llegar a cero, la pantalla se pone roja: todos quedan con **1 vida** y la bomba va el doble de rápido. |
 
 El **tutorial animado** se abre la primera vez y desde "¿Cómo se juega?" en el inicio o "Tutorial" en la sala. Cada regla tiene una escenita: la bomba que pasa, la sílaba que pasa al siguiente, la mecha y la muerte súbita.
@@ -52,7 +53,7 @@ Después abrí http://localhost:3000 en varias pestañas.
 |---|---|
 | `npm start` | Servidor de producción (Express + Socket.IO). |
 | `npm run dev` | Igual, pero se reinicia al cambiar archivos. |
-| `npm test` | 63 tests (Vitest). Cubren: normalización, palabras usadas, sílabas, mecha, sílaba que pasa al siguiente, muerte súbita, turnos, vidas, geometría de la ronda (nada se tapa), diccionario real y servidor con clientes Socket.IO. |
+| `npm test` | 66 tests (Vitest). Cubren: normalización, palabras usadas, sílabas, mecha, sílaba que pasa al siguiente, muerte súbita, turnos, vidas, geometría de la ronda (nada se tapa), diccionario real y servidor con clientes Socket.IO. |
 | `npm run build:dict` | Regenera el diccionario y las sílabas, y corre el control de calidad. |
 | `npm run check:dict` | Solo el control de calidad del diccionario. |
 | `npm run reports` | Muestra las palabras que reportaron los jugadores como faltantes. |
@@ -198,6 +199,7 @@ wortbomb/
 | `vote:cast` ✓ | `{ voteId, yes }` | Votar (gana la mayoría). |
 | `game:submit` ✓ | `{ text }` | Mandar una palabra. Fuera de turno se ignora y se registra. |
 | `game:typing` | `{ text }` | Escritura en vivo (con límite de frecuencia). |
+| `presence` | `{ visible }` | Si el jugador está mirando la pestaña (visible y con foco). |
 | `chat:send` ✓ | `{ text }` | Mensaje. Eliminados y espectadores escriben en su canal durante la partida. |
 | `report:word` ✓ | `{ word, note }` | Reportar palabra que falta. |
 
@@ -220,6 +222,8 @@ wortbomb/
 | `game:explode` | `{ playerId, lives, cause, syllable }` | la sala |
 | `game:eliminated` | `{ playerId, place, reason }` | la sala |
 | `game:announce` | `{ text, level, seconds }`: la mecha se acortó | la sala |
+| `game:paused` | `{ away: [{ id, name, offline }], pausedAt }`: no están todos en la web | la sala |
+| `game:resumed` | `{ turn, startedAt, suddenAt }`: volvieron todos (todo se corre lo que duró la pausa) | la sala |
 | `game:countdown` | `{ suddenAt }`: falta 1 minuto para la muerte súbita | la sala |
 | `game:sudden` | `{ seats }`: empieza la muerte súbita | la sala |
 | `game:end` | `{ results: ranking, estadísticas, duración, peligro máximo }` | la sala |
@@ -250,13 +254,15 @@ wortbomb/
 7. Dejá que explote: hay explosión, sacudida y corazón roto, y **el siguiente recibe la misma sílaba**. Si tampoco la sabe, sale una nueva.
 8. Seguí jugando: la mecha y el nivel de peligro suben de a poco con el tiempo y con cada vida perdida.
 9. Con la muerte súbita en 1 minuto (ajuste de la sala): aparece la cuenta regresiva, después la pantalla se pone roja, todos quedan con 1 vida y la bomba va más rápido.
-10. Al quedar sin vidas pasás a la tribuna: el chat de eliminados no lo ven los vivos.
-11. Cerrá una pestaña en su turno y volvé a abrirla en menos de 30 s: vuelve con todo el estado.
-12. Al final: podio, estadísticas y **🔁 Jugar de nuevo**. El reloj y las palabras usadas vuelven a cero.
-13. Probá en el celular: la ronda entra en la pantalla, con el teclado abierto el panel se esconde y nada se tapa.
+10. Cambiá de pestaña en una de las tres: las otras ven "⏸ ¡Pausa! No están todos en la web" y la bomba se congela. Al volver, sigue.
+11. Al quedar sin vidas pasás a la tribuna: el chat de eliminados no lo ven los vivos.
+12. Cerrá una pestaña en su turno y volvé a abrirla en menos de 30 s: vuelve con todo el estado.
+13. Al final: podio, estadísticas y **🔁 Jugar de nuevo**. El reloj y las palabras usadas vuelven a cero.
+14. Probá en el celular: la ronda entra en la pantalla, con el teclado abierto el panel se esconde y nada se tapa.
 
 ## Limitaciones conocidas
 
+- **Pausa por foco:** para probar en una sola compu con varias ventanas, solo una tiene el foco a la vez, así que la partida se pausa. Para probar solo, usá varios dispositivos o ventanas en distintas compus. Entre jugadores reales funciona como corresponde.
 - **Celular:** los navegadores no dejan abrir el teclado sin un toque. El campo queda enfocado entre turnos para que no se cierre, pero si se cerró hay que tocar el campo una vez.
 - **Persistencia:** es en archivo. No hay Redis: no reparte salas entre varios servidores.
 - **Diccionario:** aunque pasa los controles, puede tener alguna forma rara pero válida (sobre todo conjugaciones poco usadas o combinaciones de pronombres) y le puede faltar algún neologismo o regionalismo. Para eso está el botón de reporte y `extra-words.txt`.

@@ -52,6 +52,8 @@ export class Game {
     this.sudden = false; // ¿estamos en muerte súbita?
     this.suddenAt = null; // hora (del servidor) en que empieza la muerte súbita
     this.countdownSent = false;
+    this.paused = false; // pausa: alguien que juega no está mirando la pestaña
+    this.pausedAt = null;
   }
 
   /** Lo que acorta la mecha en este momento. */
@@ -141,6 +143,30 @@ export class Game {
     return events;
   }
 
+  // ---------------------------------------------------------------- pausa
+  /** Congela todo: la mecha, el reloj de partida y la cuenta de la muerte súbita. */
+  pause(at = this.now()) {
+    if (this.state !== 'playing' || this.paused) return false;
+    this.paused = true;
+    this.pausedAt = at;
+    return true;
+  }
+
+  /** Sigue exactamente desde donde quedó: corre todo lo que dependía del reloj. */
+  resume(at = this.now()) {
+    if (!this.paused) return 0;
+    const d = Math.max(0, at - this.pausedAt);
+    this.paused = false;
+    this.pausedAt = null;
+    this.startedAt += d;
+    if (this.suddenAt !== null) this.suddenAt += d;
+    if (this.turn) {
+      this.turn.startedAt += d;
+      this.turn.deadline += d;
+    }
+    return d;
+  }
+
   // ---------------------------------------------------------------- reloj: cuenta regresiva y muerte súbita
 
   /**
@@ -148,7 +174,7 @@ export class Game {
    * avisa la cuenta regresiva y arranca la muerte súbita cuando llega la hora.
    */
   clock(at = this.now(), { restartTurn = true } = {}) {
-    if (this.state !== 'playing' || this.suddenAt === null || this.sudden) return [];
+    if (this.state !== 'playing' || this.paused || this.suddenAt === null || this.sudden) return [];
     const events = [];
     if (!this.countdownSent && at >= this.suddenAt - SUDDEN_DEATH.countdownMs) {
       this.countdownSent = true;
@@ -187,6 +213,7 @@ export class Game {
    */
   submit(playerId, text, at = this.now()) {
     if (this.state !== 'playing' || !this.turn) return { events: [], result: { ok: false, reason: 'not_playing' } };
+    if (this.paused) return { events: [], result: { ok: false, reason: 'paused', message: 'El juego está en pausa: no están todos en la web.' } };
     if (this.turn.playerId !== playerId) return { events: [], result: { ok: false, reason: 'not_your_turn', ignored: true } };
     if (at > this.turn.deadline) {
       return { events: this.tick(at), result: { ok: false, reason: 'late', message: REASONS.late } };
@@ -221,7 +248,7 @@ export class Game {
 
   /** Llamado por el temporizador del servidor (o en cualquier momento): explota si venció la mecha. */
   tick(at = this.now()) {
-    if (this.state !== 'playing' || !this.turn || at < this.turn.deadline) return [];
+    if (this.state !== 'playing' || this.paused || !this.turn || at < this.turn.deadline) return [];
     return this.explode(at, 'timeout');
   }
 
@@ -256,7 +283,7 @@ export class Game {
 
   /** El jugador con la bomba se desconectó y no volvió en la gracia: la bomba le explota y sigue. */
   forfeit(playerId, at = this.now()) {
-    if (this.state !== 'playing' || this.turn?.playerId !== playerId) return [];
+    if (this.state !== 'playing' || this.paused || this.turn?.playerId !== playerId) return [];
     return this.explode(at, 'disconnect');
   }
 
@@ -264,6 +291,8 @@ export class Game {
   removePlayer(playerId, reason = 'left', at = this.now()) {
     const seat = this.seat(playerId);
     if (!seat || !seat.alive || this.state !== 'playing') return [];
+    // En pausa, todo pasa "en el instante en que se pausó" (al seguir se corre el reloj).
+    if (this.paused) at = this.pausedAt;
     const wasActive = this.turn?.playerId === playerId;
     const idx = this.seats.indexOf(seat);
     const events = this.eliminate(seat, reason, at);
@@ -279,6 +308,8 @@ export class Game {
   }
 
   finish(at) {
+    this.paused = false;
+    this.pausedAt = null;
     this.state = 'ended';
     this.endedAt = at;
     this.turn = null;
@@ -304,6 +335,7 @@ export class Game {
       state: this.state, settings: this.settings, startedAt: this.startedAt, maxLevel: this.maxLevel,
       level: this.turn ? this.turn.level : dangerLevel(this.pressure(), this.settings),
       sudden: this.sudden, suddenAt: this.suddenAt, countdownMs: SUDDEN_DEATH.countdownMs,
+      paused: this.paused, pausedAt: this.pausedAt,
       turn: this.turn ? { ...this.turn } : null,
       seats: this.seats.map((s) => ({
         id: s.id, name: s.name, avatar: s.avatar, lives: s.lives, alive: s.alive, connected: s.connected,
@@ -321,6 +353,7 @@ export class Game {
       turnCount: this.turnCount, activeIdx: this.activeIdx, lastSyllable: this.lastSyllable, lastBase: this.lastBase,
       maxLevel: this.maxLevel, results: this.results, used: this.used.toJSON(),
       livesLost: this.livesLost, eliminations: this.eliminations, sudden: this.sudden, suddenAt: this.suddenAt, countdownSent: this.countdownSent,
+      paused: this.paused, pausedAt: this.pausedAt,
       seats: this.seats.map((s) => ({ ...s })),
     };
   }
@@ -331,7 +364,7 @@ export class Game {
       state: data.state, startedAt: data.startedAt, endedAt: data.endedAt, turn: data.turn, turnCount: data.turnCount,
       activeIdx: data.activeIdx, lastSyllable: data.lastSyllable, lastBase: data.lastBase, maxLevel: data.maxLevel, results: data.results,
       livesLost: data.livesLost || 0, eliminations: data.eliminations || 0, sudden: Boolean(data.sudden), suddenAt: data.suddenAt ?? null,
-      countdownSent: Boolean(data.countdownSent),
+      countdownSent: Boolean(data.countdownSent), paused: Boolean(data.paused), pausedAt: data.pausedAt ?? null,
     });
     g.used = UsedWords.fromJSON(data.used);
     g.seats = data.seats.map((s) => ({ ...s }));

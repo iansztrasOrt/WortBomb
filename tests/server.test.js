@@ -11,7 +11,7 @@ const quiet = { debug() {}, info() {}, error() {} };
 beforeAll(async () => {
   srv = await createServer({
     port: 0, log: quiet, dict: new Dictionary(WORDS), bank: new SyllableBank([{ s: 'as', n: 5000 }, { s: 'ca', n: 5000 }]),
-    reportsFile: '/tmp/wortbomb-test-reports.jsonl',
+    reportsFile: '/tmp/wortbomb-test-reports.jsonl', rates: { roomsPerIpPerMinute: 1000 },
   });
   url = `http://localhost:${srv.port}`;
 });
@@ -136,6 +136,27 @@ describe('servidor', () => {
     expect((await call(b, 'report:word', { word: 'chuchichuchi' })).ok).toBe(true);
     expect((await call(b, 'report:word', { word: 'casa' })).ok).toBe(false); // ya está
     [a, b, c].forEach((s) => s.disconnect());
+  });
+
+  it('si alguien que juega no está mirando la pestaña, se pausa; cuando vuelve, sigue', async () => {
+    const a = client();
+    const b = client();
+    const { code } = await call(a, 'room:create', { profile: profile('Uno') });
+    await call(b, 'room:join', { code, profile: profile('Dos') });
+    await call(a, 'room:start');
+    const t1 = (await once(a, 'game:turn')).turn;
+    b.emit('presence', { visible: false });
+    const p = await once(a, 'game:paused');
+    expect(p.away.map((x) => x.name)).toEqual(['Dos']);
+    const active = t1.playerId === (await once(a, 'room:state')).you ? a : b;
+    expect((await call(active, 'game:submit', { text: 'casa' })).reason).toBe('paused');
+    await sleep(300);
+    b.emit('presence', { visible: true });
+    const r = await once(a, 'game:resumed');
+    expect(r.turn.deadline).toBeGreaterThanOrEqual(t1.deadline + 250); // la mecha no corrió durante la pausa
+    expect((await call(active, 'game:submit', { text: 'casa' })).ok).toBe(true);
+    a.disconnect();
+    b.disconnect();
   });
 
   it('la lista pública muestra salas con nombre, jugadores y estado', async () => {
