@@ -297,7 +297,6 @@ socket.on('game:accept', (ev) => {
   g.usedCount = (g.usedCount || 0) + 1;
   const seat = g.seats.find((s) => s.id === ev.playerId);
   if (seat) {
-    seat.remaining = ev.remaining;
     seat.lives = ev.lives;
     seat.words = (seat.words || 0) + 1;
   }

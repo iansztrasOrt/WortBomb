@@ -18,9 +18,9 @@ export function showResults(ctx, results) {
   const fmtAvg = (ms) => (ms ? `${(ms / 1000).toFixed(1)} s` : '—');
   const rows = r.ranking.map((p) => el('tr', {},
     el('td', { text: p.place ?? '—' }), el('td', {}, el('b', { text: p.name })), el('td', { text: p.stats.words }), el('td', { text: p.stats.longest || '—' }),
-    el('td', { text: fmtAvg(p.stats.avgMs) }), el('td', { text: p.stats.livesGained }), el('td', { text: p.stats.explosions }), el('td', { text: p.stats.repeats })));
+    el('td', { text: fmtAvg(p.stats.avgMs) }), el('td', { text: p.stats.explosions }), el('td', { text: p.stats.repeats })));
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'stats-table' },
-    el('thead', {}, el('tr', {}, ...['#', 'Jugador', 'Palabras', 'Más larga', 'Tiempo medio', 'Vidas ganadas', 'Explosiones', 'Intentos repetidos'].map((h) => el('th', { scope: 'col', text: h })))),
+    el('thead', {}, el('tr', {}, ...['#', 'Jugador', 'Palabras', 'Más larga', 'Tiempo medio', 'Explosiones', 'Intentos repetidos'].map((h) => el('th', { scope: 'col', text: h })))),
     el('tbody', {}, ...rows)));
   const me = S.room.members.find((m) => m.id === S.room.you);
   const again = leader

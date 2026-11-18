@@ -11,15 +11,14 @@
 //  · muerte súbita (si está activada): cuenta regresiva de 1 minuto y, al llegar, todos quedan con
 //    1 vida y la mecha va a la mitad
 
-import { DEFAULT_SETTINGS, TIMING, SUDDEN_DEATH, ALPHABET } from './constants.js';
-import { newAlphabet, applyWord } from './alphabet.js';
+import { DEFAULT_SETTINGS, TIMING, SUDDEN_DEATH } from './constants.js';
 import { baseFuseSeconds, fuseDurationMs, dangerLevel, fuseAnnouncement } from './fuse.js';
 import { UsedWords } from './usedWords.js';
 import { checkAndClaim, REASONS } from './turn.js';
 import { nextAlive } from './circle.js';
 import { normalizeWord } from './normalize.js';
 
-const newStats = () => ({ words: 0, longest: '', totalMs: 0, livesGained: 0, explosions: 0, repeats: 0, invalid: 0 });
+const newStats = () => ({ words: 0, longest: '', totalMs: 0, explosions: 0, repeats: 0, invalid: 0 });
 
 export class Game {
   /**
@@ -35,7 +34,7 @@ export class Game {
     this.seats = players.map((p) => ({
       id: p.id, name: p.name, avatar: p.avatar || null,
       lives: this.settings.startLives, alive: true, connected: true, disconnectedAt: null,
-      alphabet: newAlphabet(), stats: newStats(), place: null, out: null,
+      stats: newStats(), place: null, out: null,
     }));
     this.used = new UsedWords();
     this.state = 'idle'; // idle | playing | ended
@@ -92,7 +91,6 @@ export class Game {
     for (const s of this.seats) {
       s.lives = this.settings.startLives;
       s.alive = true;
-      s.alphabet = newAlphabet();
       s.stats = newStats();
       s.place = null;
       s.out = null;
@@ -210,18 +208,9 @@ export class Game {
     seat.stats.words += 1;
     seat.stats.totalMs += at - this.turn.startedAt;
     if (res.word.length > seat.stats.longest.length) seat.stats.longest = res.word;
-    // Bonus de alfabeto: completar todas las letras da una vida (hasta el máximo; en muerte súbita no).
-    const bonus = applyWord(seat.alphabet, res.word, ALPHABET);
-    let gained = false;
-    const cap = this.sudden ? 1 : this.settings.maxLives;
-    if (bonus.completed && seat.lives < cap) {
-      seat.lives += 1;
-      seat.stats.livesGained += 1;
-      gained = true;
-    }
+    // Todas las palabras valen lo mismo y las vidas no se recuperan nunca.
     const events = [{
-      type: 'accept', playerId, word: res.word, syllable: this.turn.syllable, entry: res.entry,
-      crossed: bonus.crossed, remaining: bonus.remaining, completed: bonus.completed, gained, lives: seat.lives,
+      type: 'accept', playerId, word: res.word, syllable: this.turn.syllable, entry: res.entry, lives: seat.lives,
       ms: at - this.turn.startedAt,
     }];
     // Si justo llegó la hora de la muerte súbita, el turno nuevo ya sale con la mecha corta.
@@ -318,7 +307,7 @@ export class Game {
       turn: this.turn ? { ...this.turn } : null,
       seats: this.seats.map((s) => ({
         id: s.id, name: s.name, avatar: s.avatar, lives: s.lives, alive: s.alive, connected: s.connected,
-        place: s.place, remaining: [...s.alphabet], words: s.stats.words,
+        place: s.place, words: s.stats.words,
       })),
       used: this.used.list({ limit: 500 }),
       usedCount: this.used.size,
@@ -332,7 +321,7 @@ export class Game {
       turnCount: this.turnCount, activeIdx: this.activeIdx, lastSyllable: this.lastSyllable, lastBase: this.lastBase,
       maxLevel: this.maxLevel, results: this.results, used: this.used.toJSON(),
       livesLost: this.livesLost, eliminations: this.eliminations, sudden: this.sudden, suddenAt: this.suddenAt, countdownSent: this.countdownSent,
-      seats: this.seats.map((s) => ({ ...s, alphabet: [...s.alphabet] })),
+      seats: this.seats.map((s) => ({ ...s })),
     };
   }
 
@@ -345,7 +334,7 @@ export class Game {
       countdownSent: Boolean(data.countdownSent),
     });
     g.used = UsedWords.fromJSON(data.used);
-    g.seats = data.seats.map((s) => ({ ...s, alphabet: new Set(s.alphabet) }));
+    g.seats = data.seats.map((s) => ({ ...s }));
     return g;
   }
 }

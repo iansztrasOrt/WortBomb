@@ -23,7 +23,7 @@ export function createArena(root) {
   const seatEls = new Map(); // id → { el, av, hearts, badge, name, lives }
   let layout = { seats: [], size: 80, rx: 0, ry: 0, cy: 0, center: { hw: 120, hh: 80, cy: 0 } };
   let order = []; // ids vivos, en orden de asiento
-  let maxLives = 3;
+  let totalLives = 3; // corazones que se dibujan (las vidas iniciales)
   let liveTimer = 0;
 
   function seatEl(p) {
@@ -40,14 +40,13 @@ export function createArena(root) {
     return s;
   }
 
-  function setHearts(s, lives, { breaking = false, gained = false } = {}) {
+  function setHearts(s, lives, { breaking = false } = {}) {
     s.hearts.replaceChildren();
     s.hearts.setAttribute('aria-label', `${lives} vidas`);
-    const total = Math.max(maxLives, lives);
+    const total = Math.max(totalLives, lives);
     for (let i = 0; i < total; i += 1) {
       const h = el('span', { class: `h${i >= lives ? ' lost' : ''}`, text: '❤️' });
       if (breaking && i === lives) h.classList.add('breaking');
-      if (gained && i === lives - 1) h.classList.add('gained');
       s.hearts.append(h);
     }
     s.badge.textContent = `❤️${lives}`;
@@ -56,7 +55,7 @@ export function createArena(root) {
 
   /** Dibuja/actualiza los asientos. players: [{id,name,avatar,lives,alive,connected}] en orden de asiento. */
   function render(players, { meId, activeId, lives = 3 } = {}) {
-    maxLives = lives;
+    totalLives = lives;
     const alive = players.filter((p) => p.alive);
     order = alive.map((p) => p.id);
     const rect = arena.getBoundingClientRect();
@@ -177,10 +176,6 @@ export function createArena(root) {
     loseLife(id, lives) {
       const s = seatEls.get(id);
       if (s) setHearts(s, lives, { breaking: true });
-    },
-    gainLife(id, lives) {
-      const s = seatEls.get(id);
-      if (s) setHearts(s, lives, { gained: true });
     },
     /** Explosión sobre el jugador (es una animación de 1 s: tapa a propósito, y se va). */
     explode(id) {

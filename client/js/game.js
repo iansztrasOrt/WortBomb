@@ -43,7 +43,7 @@ export function mountGame(app, ctx) {
   const form = el('form', { class: 'dock', onsubmit: submit }, wordBox, msg, el('div', { style: { textAlign: 'center' } }, reportBtn));
   stage.append(arenaHost, form);
 
-  const side = createSidePanel(ctx, { tabs: ['chat', 'words', 'letters'], className: 'side side-game' });
+  const side = createSidePanel(ctx, { tabs: ['chat', 'words'], className: 'side side-game' });
   const spectators = el('div', { class: 'spectators' });
   side.el.append(spectators);
   body.append(stage, side.el);
@@ -67,7 +67,7 @@ export function mountGame(app, ctx) {
     return g().seats.map((s) => ({ ...s, connected: S.room.members.find((m) => m.id === s.id)?.connected !== false && s.connected !== false }));
   }
   function renderSeats() {
-    arena.render(seatsData(), { meId: me(), activeId: g().turn?.playerId, lives: g().settings.maxLives });
+    arena.render(seatsData(), { meId: me(), activeId: g().turn?.playerId, lives: g().settings.startLives });
   }
   function placeBomb(animate) {
     const turn = g().turn;
@@ -249,15 +249,8 @@ export function mountGame(app, ctx) {
       side.renderWords(ev.word);
       side.bumpWords();
       if (ev.playerId === me()) {
-        side.renderLetters();
-        side.popLetters(ev.crossed);
         msg.className = 'msg-line good';
         msg.textContent = `¡Bien! "${ev.word}" ✓`;
-        if (ev.completed) toast(ev.gained ? '🎉 ¡Completaste el alfabeto! +1 vida' : '🎉 ¡Alfabeto completo! (ya tenías el máximo de vidas)');
-      }
-      if (ev.gained) {
-        arena.gainLife(ev.playerId, ev.lives);
-        audio.life();
       }
     },
     reject(ev) {
@@ -344,7 +337,6 @@ export function mountGame(app, ctx) {
     renderSpectators();
     side.renderChat();
     side.renderWords();
-    side.renderLetters();
   });
   const onResize = () => {
     renderSeats();

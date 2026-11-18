@@ -19,7 +19,6 @@ const clampInt = (v, [lo, hi], def) => {
 export function cleanSettings(patch = {}, base = DEFAULT_SETTINGS) {
   const s = { ...base };
   for (const [k, range] of Object.entries(SETTINGS_LIMITS)) if (patch[k] !== undefined) s[k] = clampInt(patch[k], range, base[k]);
-  if (s.maxLives < s.startLives) s.maxLives = s.startLives;
   if (s.fuseMin >= s.fuseInitial) s.fuseMin = Math.max(SETTINGS_LIMITS.fuseMin[0], s.fuseInitial - 1);
   return s;
 }

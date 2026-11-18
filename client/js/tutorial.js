@@ -1,5 +1,6 @@
 // Tutorial "para ver": cada regla tiene una escenita animada con la ronda, la bomba y la sílaba.
 // Se abre la primera vez y desde "¿Cómo se juega?" (inicio) y "Tutorial" (sala). En partida no.
+// (No hay bonus: todas las palabras valen igual y las vidas no se recuperan.)
 import { el, modal, store, highlight } from './ui.js';
 import { createBomb, explodeAt } from './bomb.js';
 import { avatarSVG } from './avatar.js';
@@ -130,7 +131,7 @@ const STEPS = [
   },
   {
     title: '💥 Si te explota, la sílaba pasa',
-    text: 'Perdés una vida y la bomba pasa al siguiente <b>con la misma sílaba</b>. Si él tampoco la sabe, recién ahí sale una nueva. Sin vidas quedás eliminado y mirás desde la tribuna.',
+    text: 'Perdés una vida (<b>no se recuperan nunca</b>) y la bomba pasa al siguiente <b>con la misma sílaba</b>. Si él tampoco la sabe, recién ahí sale una nueva. Sin vidas quedás eliminado y mirás desde la tribuna.',
     scene(art) {
       const s = roundScene(art, { syllable: 'GÜ' });
       const reset = () => {
@@ -178,30 +179,6 @@ const STEPS = [
     },
   },
   {
-    title: '🔤 Bonus de alfabeto',
-    text: 'Cada palabra que aceptan tacha sus letras. Completá todas y ganás una vida extra (hasta el máximo de la sala). Usá palabras con letras distintas.',
-    scene(art) {
-      const box = el('div', { class: 'scene' });
-      const letters = [...'abcdefghijlmnñopqrstuvyz'];
-      const grid = el('div', { class: 's-letters' }, ...letters.map((l) => el('span', { text: l })));
-      const word = el('div', { class: 's-word' });
-      const note = el('div', { class: 's-note', hidden: true });
-      box.append(grid, word, note);
-      art.append(box);
-      const words = ['murciélago', 'pequeño', 'joya', 'festival', 'hablando', 'zeta'];
-      const plain = (w) => w.normalize('NFD').replace(/ñ/g, '\u0001').replace(/[̀-ͯ]/g, '').replace(/\u0001/g, 'ñ');
-      const stop = timeline([
-        [0, () => { for (const sp of grid.children) sp.classList.remove('done'); note.hidden = true; word.textContent = ''; }],
-        ...words.map((w, k) => [400 + k * 850, () => {
-          word.replaceChildren(highlight(w, ''));
-          for (const sp of grid.children) if (plain(w).includes(sp.textContent)) sp.classList.add('done');
-        }]),
-        [400 + words.length * 850, () => { note.hidden = false; note.textContent = '🎉 ¡Alfabeto completo! +1 ❤️'; }],
-      ], 400 + words.length * 850 + 1800);
-      return stop;
-    },
-  },
-  {
     title: '💀 Muerte súbita',
     text: 'Si la partida se alarga, aparece una cuenta regresiva. Al llegar a cero la pantalla se pone roja: <b>todos quedan con 1 vida</b> y la bomba va el doble de rápido.',
     scene(art) {
@@ -240,7 +217,7 @@ const STEPS = [
   },
   {
     title: '¡Listo para jugar!',
-    text: 'No hace falta escribir tildes: "cancion" vale igual que "canción". Valen plurales, femeninos, conjugaciones, voseo ("tenés", "decime") y regionalismos. El último que queda gana.',
+    text: 'Todas las palabras valen igual. No hace falta escribir tildes: "cancion" vale igual que "canción". Valen plurales, femeninos, conjugaciones, voseo ("tenés", "decime") y regionalismos. El último que queda con vidas gana.',
     scene(art) {
       const box = el('div', { class: 'scene', style: { display: 'grid', placeItems: 'center' } },
         el('div', { class: 'logo', style: { fontSize: '58px' } }, el('span', { class: 'w', text: 'w' }), el('span', { class: 'ort', text: 'ORT' }), el('span', { text: 'bomb' })));

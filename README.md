@@ -2,7 +2,7 @@
 
 Juego online por salas: los jugadores forman una ronda y se pasan una bomba. En tu turno aparece una sílaba
 (como `ion`, `tr` o `güe`) y tenés que escribir una palabra en español que la contenga antes de que explote.
-Si explota, perdés una vida. El último que queda con vidas gana.
+Si explota, perdés una vida, y las vidas no se recuperan nunca. Todas las palabras valen igual. El último que queda con vidas gana.
 
 Tiene identidad visual propia: no usa assets, logos ni textos de otros juegos, solo la mecánica de "pasar la bomba".
 
@@ -13,12 +13,12 @@ Tiene identidad visual propia: no usa assets, logos ni textos de otros juegos, s
    - **crear una sala**;
    - **unirte con el código** de 5 letras o con un link `https://…/sala/CODIGO`.
 2. En la **sala de espera**, el líder 👑 ajusta las reglas y toca **¡Empezar!** (hacen falta al menos 2 jugadores). Los ajustes son:
-   - vidas por jugador y vidas máximas;
+   - vidas por jugador;
    - largo mínimo de palabra;
    - mecha inicial y mecha mínima;
    - minuto en que arranca la muerte súbita;
    - sala pública o privada, contraseña y filtro de insultos.
-3. Cuando te toca, **ya podés escribir**: el campo tiene el foco (no hay que tocar nada) y la sílaba aparece resaltada mientras escribís. Apretás **Enter**.
+3. Cuando te toca, **ya podés escribir desde el teclado**, sin hacer clic en ningún lado: el campo toma el foco solo, y aunque estés en otra parte de la página (o en el chat), las letras van a la palabra. La sílaba aparece resaltada mientras escribís. Apretás **Enter**.
 4. Los demás ven en vivo lo que escribís.
 
 **Reglas**
@@ -28,12 +28,11 @@ Tiene identidad visual propia: no usa assets, logos ni textos de otros juegos, s
 | La palabra | Tiene que existir, contener la sílaba en cualquier posición y **no haber sido usada en la partida**. |
 | **Regla de oro** | Una palabra aceptada no se puede volver a usar en toda la partida, ni por vos ni por otro. Tampoco cambiándole mayúsculas, tildes o espacios. Si lo intentás, la mecha sigue y no perdés vida. Formas distintas sí valen (`casa`/`casas`, `canto`/`cantaba`). |
 | Sin tildes | `cancion` = `canción`. La **ñ** sí cuenta como letra distinta (`año` ≠ `ano`). |
-| Si te explota | Perdés una vida y la bomba pasa al siguiente **con la misma sílaba**. Si él tampoco la sabe, sale una sílaba nueva. Sin vidas, quedás eliminado y mirás desde la tribuna, con un chat propio para no spoilear. |
+| Si te explota | Perdés una vida (no hay forma de recuperarla) y la bomba pasa al siguiente **con la misma sílaba**. Si él tampoco la sabe, sale una sílaba nueva. Sin vidas, quedás eliminado y mirás desde la tribuna, con un chat propio para no spoilear. |
 | La mecha se acorta, de a poco | Con el **tiempo de partida**: un 5 % menos por minuto. Con **cada vida perdida** en la ronda: un 3 % menos, y un 5 % más por cada eliminado. Arriba se ve el **nivel de peligro** (1 a 10). |
 | Muerte súbita | Si la partida se alarga, el último minuto aparece una **cuenta regresiva**. Al llegar a cero, la pantalla se pone roja: todos quedan con **1 vida** y la bomba va el doble de rápido. |
-| Bonus de alfabeto | Cada palabra tacha sus letras. Completar todas da +1 vida, hasta el máximo (en muerte súbita, no). |
 
-El **tutorial animado** se abre la primera vez y desde "¿Cómo se juega?" en el inicio o "Tutorial" en la sala. Cada regla tiene una escenita: la bomba que pasa, la sílaba que pasa al siguiente, la mecha, el bonus y la muerte súbita.
+El **tutorial animado** se abre la primera vez y desde "¿Cómo se juega?" en el inicio o "Tutorial" en la sala. Cada regla tiene una escenita: la bomba que pasa, la sílaba que pasa al siguiente, la mecha y la muerte súbita.
 
 ## Instalación y scripts
 
@@ -53,7 +52,7 @@ Después abrí http://localhost:3000 en varias pestañas.
 |---|---|
 | `npm start` | Servidor de producción (Express + Socket.IO). |
 | `npm run dev` | Igual, pero se reinicia al cambiar archivos. |
-| `npm test` | 66 tests (Vitest). Cubren: normalización, palabras usadas, sílabas, mecha, sílaba que pasa al siguiente, muerte súbita, turnos, bonus, geometría de la ronda (nada se tapa), diccionario real y servidor con clientes Socket.IO. |
+| `npm test` | 63 tests (Vitest). Cubren: normalización, palabras usadas, sílabas, mecha, sílaba que pasa al siguiente, muerte súbita, turnos, vidas, geometría de la ronda (nada se tapa), diccionario real y servidor con clientes Socket.IO. |
 | `npm run build:dict` | Regenera el diccionario y las sílabas, y corre el control de calidad. |
 | `npm run check:dict` | Solo el control de calidad del diccionario. |
 | `npm run reports` | Muestra las palabras que reportaron los jugadores como faltantes. |
@@ -160,7 +159,6 @@ wortbomb/
 │   ├── usedWords.js        palabras usadas (claim atómico)
 │   ├── turn.js             validación en orden: formato → sílaba → diccionario → usada
 │   ├── fuse.js             mecha, nivel de peligro y anuncios
-│   ├── alphabet.js         bonus de alfabeto
 │   ├── circle.js           geometría de la ronda (asientos, centro, bomba)
 │   └── game.js             la partida (turnos, explosiones, muerte súbita, resultados)
 ├── server/
@@ -172,7 +170,7 @@ wortbomb/
 ├── client/                 HTML + CSS + JavaScript modular (sin build)
 │   ├── index.html, css/style.css, img/favicon.svg
 │   └── js/  main.js (controlador) · net.js (socket y reloj) · home.js · room.js · game.js · arena.js (ronda)
-│            bomb.js (bomba y explosión) · panels.js (chat, palabras, letras) · results.js · tutorial.js
+│            bomb.js (bomba y explosión) · panels.js (chat y palabras) · results.js · tutorial.js
 │            audio.js (Web Audio) · avatar.js (SVG) · profile.js · i18n.js · ui.js
 ├── data/                   diccionario, sílabas, listas de ajuste y de control, licencias
 ├── scripts/                build-dictionary, hunspell, build-syllables, check-dictionary, show-reports, e2e, layout-check
@@ -217,7 +215,7 @@ wortbomb/
 | `game:start` | `{ game, serverNow }` | la sala |
 | `game:turn` | `{ turn: { n, playerId, syllable, fails, startedAt, duration, deadline, level, sudden }, reason, from, seats }` | la sala |
 | `game:typing` | `{ playerId, text }` | la sala |
-| `game:accept` | `{ playerId, word, entry, crossed, remaining, completed, gained, lives }` | la sala |
+| `game:accept` | `{ playerId, word, syllable, entry, lives, ms }` | la sala |
 | `game:reject` | `{ playerId, reason, word, message, by }` | la sala |
 | `game:explode` | `{ playerId, lives, cause, syllable }` | la sala |
 | `game:eliminated` | `{ playerId, place, reason }` | la sala |

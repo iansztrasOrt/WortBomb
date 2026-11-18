@@ -188,12 +188,6 @@ kbd { font: 800 12px ui-monospace, Menlo, monospace; background: var(--card-2); 
 .words-list li .by { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 700; }
 .words-list li.new { animation: slideIn .4s; }
 @keyframes slideIn { from { transform: translateX(-12px); opacity: 0; } }
-.letters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 14px; align-content: start; }
-.letters span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; font: 800 20px var(--display); background: var(--card-2); border: 2px solid var(--line); text-transform: uppercase; transition: all .3s; }
-.letters span.done { background: var(--good-bg); color: var(--good); border-color: transparent; text-decoration: line-through; opacity: .55; transform: scale(.92); }
-.letters span.pop { animation: letterPop .5s; }
-@keyframes letterPop { 40% { transform: scale(1.35) rotate(-6deg); } }
-.letters-note { padding: 0 14px 14px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
 
 /* ---------- partida ---------- */
 .game { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
@@ -227,8 +221,6 @@ kbd { font: 800 12px ui-monospace, Menlo, monospace; background: var(--card-2); 
 .seat .hearts .h.lost { filter: grayscale(1); opacity: .35; }
 .seat .hearts .h.breaking { animation: heartBreak .9s forwards; }
 @keyframes heartBreak { 20% { transform: scale(1.5); } 60% { transform: scale(1.2) rotate(-25deg); opacity: 1; filter: none; } 100% { transform: translateY(14px) rotate(-60deg); opacity: .35; filter: grayscale(1); } }
-.seat .hearts .h.gained { animation: heartGain .8s; }
-@keyframes heartGain { 0% { transform: scale(0); } 60% { transform: scale(1.7); } }
 .seat.off .av-wrap { filter: grayscale(.8); opacity: .6; }
 .seat.off .name::after { content: ' · 📡'; }
 .seat.leaving { animation: ghostOut .9s forwards; }
@@ -442,9 +434,6 @@ body.sudden .topbar { background: linear-gradient(90deg, rgba(224, 36, 43, .18),
 .scene .s-bar { height: 14px; border-radius: 8px; background: var(--line); overflow: hidden; }
 .scene .s-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--spark)); transition: width .8s; }
 .scene.red { background: radial-gradient(circle, #ffd8cf 0 25%, #ff7d63 60%, #d81f26 100%); }
-.scene .s-letters { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); display: grid; grid-template-columns: repeat(8, 26px); gap: 4px; }
-.scene .s-letters span { display: grid; place-items: center; height: 26px; border-radius: 6px; background: var(--card); border: 2px solid var(--line); font: 800 14px var(--display); text-transform: uppercase; transition: all .3s; }
-.scene .s-letters span.done { background: var(--good-bg); color: var(--good); text-decoration: line-through; opacity: .6; }
 .scene .s-word { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); font: 800 26px var(--display); }
 .scene .s-word mark { background: var(--spark); border-radius: 6px; padding: 0 2px; }
 .scene .s-big { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 800 56px/1 var(--display); color: #fff; -webkit-text-stroke: 3px #5a0a0e; paint-order: stroke fill; text-align: center; }

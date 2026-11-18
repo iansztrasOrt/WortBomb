@@ -1,19 +1,17 @@
 // Panel lateral: chat (con canal propio para eliminados y espectadores), historial de palabras
-// usadas (con buscador, la más reciente arriba) y letras del bonus de alfabeto.
+// usadas (con buscador, la más reciente arriba).
 import { el } from './ui.js';
 import { t } from './i18n.js';
 import { avatarSVG } from './avatar.js';
 
-const ALPHABET = [...'abcdefghijlmnñopqrstuvyz'];
-
-export function createSidePanel(ctx, { tabs = ['chat', 'words', 'letters'], className = 'side' } = {}) {
+export function createSidePanel(ctx, { tabs = ['chat', 'words'], className = 'side' } = {}) {
   const { S } = ctx;
   const root = el('section', { class: className, 'aria-label': 'Panel' });
   const tabBar = el('div', { class: 'tabs', role: 'tablist' });
   const panels = {};
   const badges = {};
   let current = tabs[0];
-  const labels = { chat: t('chat'), words: t('words'), letters: t('letters') };
+  const labels = { chat: t('chat'), words: t('words') };
   for (const name of tabs) {
     badges[name] = el('span', { class: 'badge', hidden: true });
     const b = el('button', { type: 'button', role: 'tab', 'aria-selected': String(name === current), id: `tab-${name}`, onclick: () => select(name) }, labels[name], badges[name]);
@@ -44,11 +42,6 @@ export function createSidePanel(ctx, { tabs = ['chat', 'words', 'letters'], clas
   const wordsCount = el('div', { class: 'small muted', style: { padding: '0 10px 8px' } });
   panels.words = el('div', { class: 'tabpanel', role: 'tabpanel', 'aria-labelledby': 'tab-words', hidden: true, style: { gridTemplateRows: 'auto auto minmax(0,1fr)' } },
     el('div', { class: 'words-search' }, search), wordsCount, wordsList);
-
-  // ---- letras
-  const lettersBox = el('div', { class: 'letters', 'aria-label': 'Letras del bonus' });
-  const lettersNote = el('p', { class: 'letters-note' });
-  panels.letters = el('div', { class: 'tabpanel', role: 'tabpanel', 'aria-labelledby': 'tab-letters', hidden: true, style: { gridTemplateRows: 'auto auto' } }, lettersBox, lettersNote);
 
   for (const name of tabs) root.append(panels[name]);
 
@@ -102,17 +95,5 @@ export function createSidePanel(ctx, { tabs = ['chat', 'words', 'letters'], clas
     }));
   }
 
-  function renderLetters() {
-    const g = S.room?.game;
-    const seat = g?.seats.find((s) => s.id === S.room.you);
-    const remaining = new Set(seat ? seat.remaining : ALPHABET);
-    lettersBox.replaceChildren(...ALPHABET.map((l) => el('span', { class: remaining.has(l) ? '' : 'done', text: l, 'aria-label': `${l}${remaining.has(l) ? '' : ' tachada'}` })));
-    lettersNote.textContent = seat ? t('lettersNote', { max: g.settings.maxLives }) : 'Las letras del bonus aparecen cuando jugás.';
-  }
-  function popLetters(crossed) {
-    for (const span of lettersBox.children) if (crossed.includes(span.textContent)) span.classList.add('pop');
-  }
-
-  if (tabs.includes('letters')) renderLetters();
-  return { el: root, renderChat, addChat, renderWords, renderLetters, popLetters, select, bumpWords: () => bump('words'), focusChat: () => chatInput.focus() };
+  return { el: root, renderChat, addChat, renderWords, select, bumpWords: () => bump('words'), focusChat: () => chatInput.focus() };
 }

@@ -8,10 +8,9 @@ import { openTutorial } from './tutorial.js';
 export const RULES = [
   ['Pasá la bomba', 'En tu turno aparece una sílaba (como "ion" o "tr"). Escribí una palabra que la contenga y apretá Enter antes de que explote. No hace falta tocar nada: cuando te toca, ya podés escribir.'],
   ['No se repite NADA', 'Una palabra aceptada no la puede volver a usar nadie en toda la partida: ni vos ni los demás. Tampoco cambiándole tildes o mayúsculas. Si lo intentás, la mecha sigue corriendo (pero no perdés vida).'],
-  ['Si te explota', 'Perdés una vida y la bomba pasa al siguiente CON LA MISMA SÍLABA. Si él tampoco la sabe, recién ahí sale una sílaba nueva. Sin vidas, quedás eliminado y mirás desde la tribuna. Gana el último que queda.'],
+  ['Si te explota', 'Perdés una vida (las vidas no se recuperan nunca) y la bomba pasa al siguiente CON LA MISMA SÍLABA. Si él tampoco la sabe, recién ahí sale una sílaba nueva. Sin vidas, quedás eliminado y mirás desde la tribuna. Gana el último que queda.'],
   ['La mecha se acorta', 'De a poco, de dos formas: con el tiempo de partida (un 5 % menos por minuto) y cada vez que alguien pierde una vida (un 3 % menos; un poco más si queda eliminado). Mirá el nivel de peligro arriba.'],
   ['Muerte súbita', 'Si la partida se alarga, aparece una cuenta regresiva. Cuando llega a cero, la pantalla se pone roja: todos quedan con 1 vida y la bomba va el doble de rápido.'],
-  ['Bonus de alfabeto', 'Cada palabra tacha sus letras. Completá todas y ganás una vida extra (hasta el máximo; en muerte súbita no).'],
   ['Sin tildes', '"canción" y "cancion" valen igual. Se aceptan plurales, femeninos, conjugaciones, voseo y regionalismos.'],
 ];
 export function rulesList(settings) {
@@ -21,14 +20,12 @@ export function rulesList(settings) {
     if (settings && i === 4) body = settings.suddenDeathMinutes > 0
       ? `A los ${settings.suddenDeathMinutes} minutos de partida (con cuenta regresiva el último minuto) la pantalla se pone roja: todos quedan con 1 vida y la bomba va el doble de rápido.`
       : 'En esta sala está desactivada.';
-    if (settings && i === 5) body = `Cada palabra tacha sus letras. Completá todas y ganás una vida extra (hasta ${settings.maxLives}; en muerte súbita no).`;
     return el('li', {}, el('strong', { text: `${title}: ` }), body);
   }));
 }
 
 const SETTING_FIELDS = [
   ['startLives', 'Vidas por jugador', 1, 10],
-  ['maxLives', 'Vidas máximas (bonus)', 1, 10],
   ['minWordLength', 'Largo mínimo de palabra', 2, 8],
   ['minSyllableWords', 'Palabras mínimas por sílaba', 1, 50],
   ['fuseInitial', 'Mecha inicial (s)', 4, 30],

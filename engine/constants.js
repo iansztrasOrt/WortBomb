@@ -2,8 +2,7 @@
 
 /** Ajustes de sala por defecto (el líder los puede cambiar dentro de SETTINGS_LIMITS). */
 export const DEFAULT_SETTINGS = Object.freeze({
-  startLives: 2, // vidas con las que empieza cada jugador
-  maxLives: 3, // tope de vidas (el bonus de alfabeto no supera esto)
+  startLives: 2, // vidas con las que empieza cada jugador (solo se pierden: no hay forma de recuperarlas)
   minWordLength: 3, // largo mínimo de palabra
   minSyllableWords: 5, // una sílaba solo sale si quedan al menos N palabras sin usar que la contienen
   fuseInitial: 12, // segundos de mecha al empezar la partida
@@ -13,7 +12,6 @@ export const DEFAULT_SETTINGS = Object.freeze({
 
 export const SETTINGS_LIMITS = Object.freeze({
   startLives: [1, 10],
-  maxLives: [1, 10],
   minWordLength: [2, 8],
   minSyllableWords: [1, 50],
   fuseInitial: [4, 30],
@@ -79,9 +77,6 @@ export const TIER_SCHEDULE = Object.freeze([
   { minutes: 5, weights: [0.3, 0.4, 0.22, 0.08] },
   { minutes: 8, weights: [0.2, 0.35, 0.3, 0.15] },
 ]);
-
-/** Bonus de alfabeto (letras del español; k, w y x no cuentan). */
-export const ALPHABET = Object.freeze([...'abcdefghijlmnñopqrstuvyz']);
 
 export const TIMING = Object.freeze({
   activeGraceMs: 5000, // si el jugador con la bomba se desconecta, tiene 5 s para volver

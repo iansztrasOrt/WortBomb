@@ -4,10 +4,9 @@ import { Dictionary } from '../engine/dictionary.js';
 import { UsedWords } from '../engine/usedWords.js';
 import { SyllableBank, tierWeightsAt } from '../engine/syllables.js';
 import { baseFuseSeconds, fuseDurationMs, dangerLevel, fuseAnnouncement } from '../engine/fuse.js';
-import { newAlphabet, applyWord } from '../engine/alphabet.js';
 import { checkAndClaim } from '../engine/turn.js';
 import { Game } from '../engine/game.js';
-import { DEFAULT_SETTINGS, ALPHABET, FUSE } from '../engine/constants.js';
+import { DEFAULT_SETTINGS, FUSE } from '../engine/constants.js';
 
 // ---------------------------------------------------------------- ayudas
 const WORDS = ['casa', 'casas', 'cancion', 'canciones', 'canto', 'cantos', 'cantor', 'encanto', 'montaña', 'pinguino', 'ascensor',
@@ -315,15 +314,6 @@ describe('muerte súbita', () => {
     expect(g.turn.level).toBe(10);
   });
 
-  it('en muerte súbita el bonus de alfabeto no da vidas', () => {
-    const { g, now } = sd();
-    g.startSuddenDeath(now());
-    const seat = g.seat(g.turn.playerId);
-    seat.alphabet = new Set(['c', 'a']);
-    const ev = g.submit(seat.id, 'casa', now()).events[0];
-    expect(ev).toMatchObject({ completed: true, gained: false, lives: 1 });
-  });
-
   it('si la hora llega justo en un acierto o una explosión, el turno nuevo ya sale con la mecha corta', () => {
     const { g, now } = sd();
     now.set(g.startedAt + 5 * 60000 + 10);
@@ -453,34 +443,15 @@ describe('turnos', () => {
   });
 });
 
-// ---------------------------------------------------------------- bonus de alfabeto
-describe('bonus de alfabeto', () => {
-  it('una palabra tacha varias letras; completar da vida y reinicia', () => {
-    const rem = newAlphabet();
-    const r = applyWord(rem, 'murcielago');
-    expect(r.crossed.sort()).toEqual([...'murcielago'].filter((c, i, a) => a.indexOf(c) === i).sort());
-    expect(r.completed).toBe(false);
-    for (const l of ALPHABET) if (!'z'.includes(l)) rem.delete(l);
-    const fin = applyWord(rem, 'zapato'); // cierra la última letra
-    expect(fin.completed).toBe(true);
-    expect(rem.size).toBe(ALPHABET.length);
-  });
-
-  it('completar estando en el máximo no suma vida', () => {
-    const { g, now } = newGame({ n: 2, settings: { startLives: 3, maxLives: 3 } });
+// ---------------------------------------------------------------- vidas
+describe('vidas', () => {
+  it('no hay forma de ganar vidas: acertar nunca suma, aunque la palabra use muchas letras', () => {
+    const { g, now } = newGame({ n: 2, settings: { startLives: 2 } });
     const seat = g.seat(g.turn.playerId);
-    seat.alphabet = new Set(['c', 'a']);
-    const evs = g.submit(seat.id, 'casa', now()).events;
-    expect(evs[0]).toMatchObject({ type: 'accept', completed: true, gained: false, lives: 3 });
-  });
-
-  it('completar por debajo del máximo suma una vida', () => {
-    const { g, now } = newGame({ n: 2, settings: { startLives: 2, maxLives: 3 } });
-    const seat = g.seat(g.turn.playerId);
-    seat.alphabet = new Set(['c', 's']);
-    const evs = g.submit(seat.id, 'cascada', now()).events;
-    expect(evs[0]).toMatchObject({ completed: true, gained: true, lives: 3 });
-    expect(seat.alphabet.size).toBe(ALPHABET.length);
+    const ev = g.submit(seat.id, 'cascada', now()).events[0];
+    expect(ev).toMatchObject({ type: 'accept', lives: 2 });
+    expect(ev.gained).toBeUndefined();
+    expect('alphabet' in seat).toBe(false);
   });
 });
 

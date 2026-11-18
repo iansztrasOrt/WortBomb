@@ -104,7 +104,6 @@ for (const view of VIEWS) {
     await page.waitForSelector('.lobby');
     const code = (await page.textContent('.chip b')).trim();
     await page.fill('input[data-key=startLives]', '5');
-    await page.fill('input[data-key=maxLives]', '5');
     await page.fill('input[data-key=fuseInitial]', '30');
     await page.fill('input[type=number][max="16"]', '16');
     await page.click('text=Guardar ajustes');

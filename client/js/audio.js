@@ -69,7 +69,6 @@ export const audio = {
     this.tone(90, 0.7, 'sine', 0.5, 0, -50);
   },
   ok() { this.tone(660, 0.09, 'triangle', 0.18); this.tone(990, 0.14, 'triangle', 0.18, 0.08); },
-  life() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.16, 'triangle', 0.16, i * 0.09)); },
   pass() { this.noise(0.25, { gain: 0.18, from: 600, to: 3000 }); },
   error() { this.tone(170, 0.18, 'sawtooth', 0.1); this.tone(140, 0.2, 'sawtooth', 0.1, 0.09); },
   fuse() { this.noise(0.08, { gain: 0.05, from: 6000, to: 3000 }); },
