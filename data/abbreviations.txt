@@ -1,0 +1,6 @@
+# Abreviaturas que los diccionarios de corrector traen sin el punto. No son palabras: se quitan.
+abc admón adv apdo aprox art atte atto avd avda ayto bibl blv bs bv cap cent cf cfr cgo ch cl cm
+cód coord cta cte ctvo depto diag dicc dom dpto dto dupdo ed edit ej etc fca fig fra geogr geom gob
+gral gta hab ib ibíd imp impr impto incl ing inst izq izqda izqdas izqdo izqdos jhs kg km lic loc
+ms mtro núm ohm atta attas cappa cappas pbro pdta pg pl plza pp ppal pral prest prof pról prov pts pza rdo reg rep rvd rvdo
+sdad sig soc ss teléf tfno tpo vs xto

@@ -1,0 +1,53 @@
+{
+  "name": "wortbomb",
+  "version": "1.0.0",
+  "description": "wORTbomb: juego online por salas de pasar la bomba escribiendo palabras en español que contengan una sílaba.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "vitest run",
+    "build:dict": "node scripts/build-dictionary.js && node scripts/build-syllables.js && node scripts/check-dictionary.js",
+    "build:syllables": "node scripts/build-syllables.js",
+    "check:dict": "node scripts/check-dictionary.js",
+    "reports": "node scripts/show-reports.js",
+    "e2e": "node scripts/e2e.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.3.0",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "an-array-of-spanish-words": "^2.0.0",
+    "dictionary-es": "^4.0.0",
+    "dictionary-es-ar": "^2.0.0",
+    "dictionary-es-bo": "^2.0.0",
+    "dictionary-es-cl": "^2.0.0",
+    "dictionary-es-co": "^2.0.0",
+    "dictionary-es-cr": "^2.0.0",
+    "dictionary-es-cu": "^2.0.0",
+    "dictionary-es-do": "^2.0.0",
+    "dictionary-es-ec": "^2.0.0",
+    "dictionary-es-es": "^1.0.1",
+    "dictionary-es-gt": "^2.0.0",
+    "dictionary-es-hn": "^2.0.0",
+    "dictionary-es-mx": "^2.0.0",
+    "dictionary-es-ni": "^2.0.0",
+    "dictionary-es-pa": "^2.0.0",
+    "dictionary-es-pe": "^2.0.0",
+    "dictionary-es-ph": "^2.0.0",
+    "dictionary-es-pr": "^2.0.0",
+    "dictionary-es-py": "^2.0.0",
+    "dictionary-es-sv": "^2.0.0",
+    "dictionary-es-us": "^2.0.0",
+    "dictionary-es-uy": "^2.0.0",
+    "dictionary-es-ve": "^2.0.0",
+    "socket.io-client": "^4.8.4",
+    "vitest": "^3.2.7"
+  }
+}

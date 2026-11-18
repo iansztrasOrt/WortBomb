@@ -1,0 +1,7 @@
+# Palabras que el juego NO acepta aunque estén en el diccionario (una por línea).
+# Por defecto está vacía: todas las palabras del español valen.
+# Si querés vetar insultos u otras palabras, agregalas abajo (se normalizan solas).
+# "vistes" también es presente de vestir (tú vistes), pero se veta porque casi siempre se usa
+# como el pretérito vulgar de "ver" (vos lo vistes). Igual "distes" (de distar / vulgar de "diste").
+vistes
+distes

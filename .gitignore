@@ -1,0 +1,8 @@
+node_modules/
+data/sources/
+data/reports/*.jsonl
+*.log
+e2e-*.png
+.DS_Store
+rooms.json
+capturas/
