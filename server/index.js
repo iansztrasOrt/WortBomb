@@ -77,8 +77,10 @@ export async function createServer({ port = Number(process.env.PORT) || 3000, pe
   app.get('/sala/:code', (req, res) => res.redirect(`/?sala=${encodeURIComponent(cleanCode(req.params.code))}`));
   // El cliente usa algunos módulos del motor (círculo, constantes, normalización).
   const engineFiles = new Set(['circle.js', 'constants.js', 'normalize.js', 'fuse.js']);
-  app.get('/engine/:file', (req, res, next) => (engineFiles.has(req.params.file) ? res.sendFile(path.join(ROOT, 'engine', req.params.file)) : next()));
-  app.use(express.static(path.join(ROOT, 'client'), { extensions: ['html'], maxAge: '1h', setHeaders: (res, p) => { if (p.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache'); } }));
+  app.get('/engine/:file', (req, res, next) => (engineFiles.has(req.params.file) ? res.sendFile(path.join(ROOT, 'engine', req.params.file), { headers: { 'Cache-Control': 'no-cache' } }) : next()));
+  // no-cache: el navegador revisa siempre si hay una versión nueva (con ETag, así que si no cambió no
+  // la vuelve a bajar). Después de una actualización todos ven el juego nuevo al recargar.
+  app.use(express.static(path.join(ROOT, 'client'), { extensions: ['html'], etag: true, lastModified: true, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
 
   await new Promise((resolve) => server.listen(port, resolve));
   log.info(`wORTbomb escuchando en http://localhost:${server.address().port}`);
