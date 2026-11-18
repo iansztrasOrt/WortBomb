@@ -61,21 +61,25 @@ export const SUDDEN_DEATH = Object.freeze({
 export const DANGER_LEVELS = 10;
 
 /**
- * Dificultad de las sílabas: por tramos según cuántas palabras las contienen,
- * mezclados con pesos que cambian con el tiempo de partida (se interpolan entre puntos).
+ * Dificultad de las sílabas. Se mide por USO REAL: en cuántas de las 30.000 palabras más usadas
+ * del español hablado aparece la sílaba (campo "f" de syllables.json). Así no salen sílabas que
+ * solo están en formas rarísimas del diccionario (como "uaq" o "cee").
+ * Los tramos se mezclan con pesos que cambian con el tiempo de partida (interpolados), de a poco.
+ * Una sílaba que aparece en menos de MIN_COMMON palabras comunes no sale nunca.
  */
 export const SYLLABLE_TIERS = Object.freeze([
-  { name: 'común', min: 1000, max: Infinity },
-  { name: 'media', min: 300, max: 1000 },
-  { name: 'difícil', min: 50, max: 300 },
-  { name: 'brava', min: 10, max: 50 },
+  { name: 'común', min: 150, max: Infinity },
+  { name: 'media', min: 60, max: 150 },
+  { name: 'difícil', min: 25, max: 60 },
+  { name: 'brava', min: 15, max: 25 },
 ]);
+export const SYLLABLE_MIN_COMMON = 15;
 export const TIER_SCHEDULE = Object.freeze([
   { minutes: 0, weights: [1, 0, 0, 0] },
-  { minutes: 1.5, weights: [0.75, 0.25, 0, 0] },
-  { minutes: 3, weights: [0.5, 0.35, 0.15, 0] },
-  { minutes: 5, weights: [0.3, 0.4, 0.22, 0.08] },
-  { minutes: 8, weights: [0.2, 0.35, 0.3, 0.15] },
+  { minutes: 2, weights: [0.85, 0.15, 0, 0] },
+  { minutes: 4, weights: [0.65, 0.28, 0.07, 0] },
+  { minutes: 7, weights: [0.5, 0.33, 0.14, 0.03] },
+  { minutes: 10, weights: [0.4, 0.35, 0.19, 0.06] },
 ]);
 
 export const TIMING = Object.freeze({

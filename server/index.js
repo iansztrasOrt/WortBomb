@@ -8,6 +8,7 @@
 //   LOG_LEVEL       debug | info | error (info)
 
 import http from 'node:http';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -20,6 +21,9 @@ import { attachSockets } from './sockets.js';
 import { FilePersistence, ReportLog } from './persistence.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Versión visible (en /healthz, /api/version y abajo en la página). Render pone RENDER_GIT_COMMIT.
+const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+export const VERSION = `${PKG.version}${process.env.RENDER_GIT_COMMIT ? `-${process.env.RENDER_GIT_COMMIT.slice(0, 7)}` : ''}`;
 
 export function makeLogger(level = process.env.LOG_LEVEL || 'info') {
   const order = { debug: 0, info: 1, error: 2 };
@@ -68,12 +72,13 @@ export async function createServer({ port = Number(process.env.PORT) || 3000, pe
   app.get('/healthz', (_req, res) => {
     const mem = process.memoryUsage();
     res.json({
-      ok: true, rooms: manager.rooms.size, players: [...manager.rooms.values()].reduce((a, r) => a + r.connectedCount, 0),
+      ok: true, version: VERSION, rooms: manager.rooms.size, players: [...manager.rooms.values()].reduce((a, r) => a + r.connectedCount, 0),
       dictionary: dict.size, syllables: bank.size, memoryMb: { rss: Math.round(mem.rss / 1048576), heap: Math.round(mem.heapUsed / 1048576), dictionary: Math.round(dictMb) },
       uptime: Math.round(process.uptime()),
     });
   });
   app.get('/api/salas', (_req, res) => res.json({ rooms: manager.list() }));
+  app.get('/api/version', (_req, res) => res.json({ version: VERSION }));
   app.get('/sala/:code', (req, res) => res.redirect(`/?sala=${encodeURIComponent(cleanCode(req.params.code))}`));
   // El cliente usa algunos módulos del motor (círculo, constantes, normalización).
   const engineFiles = new Set(['circle.js', 'constants.js', 'normalize.js', 'fuse.js']);

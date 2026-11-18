@@ -389,6 +389,12 @@ socket.on('game:end', ({ results }) => {
 });
 
 // ---------------------------------------------------------------- inicio
+// Versión (para confirmar que estás jugando la última)
+fetch('/api/version').then((r) => r.json()).then(({ version }) => {
+  const v = el('div', { class: 'version-tag', text: `wORTbomb v${version}` });
+  document.body.append(v);
+}).catch(() => {});
+
 document.addEventListener('pointerdown', () => audio.unlock(), { once: true });
 document.addEventListener('keydown', () => audio.unlock(), { once: true });
 show('home');

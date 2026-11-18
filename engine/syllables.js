@@ -1,18 +1,18 @@
 // Banco de sílabas y selección por dificultad.
 //
-// Cada sílaba trae n (palabras del diccionario que la contienen) y c[] (lo mismo según el largo
-// mínimo de palabra). La dificultad sube con el tiempo de partida mezclando tramos cada vez menos
-// frecuentes (TIER_SCHEDULE). Garantías:
+// Cada sílaba trae n (palabras del diccionario que la contienen), c[] (lo mismo según el largo
+// mínimo de palabra) y f (en cuántas de las 30.000 palabras más usadas aparece: mide qué tan fácil
+// es para una persona). La dificultad sube con el tiempo de partida mezclando tramos de f cada vez
+// más bajos (TIER_SCHEDULE). Garantías:
 //  · nunca sale una sílaba con menos de N palabras SIN USAR disponibles en la partida
 //  · nunca sale la misma sílaba dos turnos seguidos
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SYLLABLE_TIERS, TIER_SCHEDULE } from './constants.js';
+import { SYLLABLE_TIERS, TIER_SCHEDULE, SYLLABLE_MIN_COMMON } from './constants.js';
 
 export const SYLLABLES_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../data/syllables.json');
-const EASY_MIN_FREQUENT = 40; // en el primer tramo, que aparezca en al menos 40 palabras de uso común
 
 /** Pesos de cada tramo a los `minutes` de partida (interpolación lineal entre los puntos). */
 export function tierWeightsAt(minutes, schedule = TIER_SCHEDULE) {
@@ -62,15 +62,12 @@ export class SyllableBank {
     if (!this.byTier.has(minLength)) {
       const lists = this.tiers.map(() => []);
       for (const e of this.entries.values()) {
-        const n = this.total(e.s, minLength);
-        const t = this.tiers.findIndex((tier) => n >= tier.min && n < tier.max);
-        if (t < 0) continue;
-        if (t === 0 && e.f !== undefined && e.f < EASY_MIN_FREQUENT) {
-          // muchas formas raras pero pocas palabras de uso común: va al tramo siguiente
-          lists[1].push(e.s);
-          continue;
-        }
-        lists[t].push(e.s);
+        // dificultad = en cuántas palabras de uso común aparece (f); sin ese dato, el total
+        const common = e.f ?? this.total(e.s, minLength);
+        if (common < SYLLABLE_MIN_COMMON) continue; // demasiado rara: no sale nunca
+        if (this.total(e.s, minLength) < 50) continue; // y tiene que tener palabras de sobra
+        const t = this.tiers.findIndex((tier) => common >= tier.min && common < tier.max);
+        if (t >= 0) lists[t].push(e.s);
       }
       this.byTier.set(minLength, lists);
     }

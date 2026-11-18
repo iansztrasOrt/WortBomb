@@ -453,3 +453,15 @@ body.sudden .topbar { background: linear-gradient(90deg, rgba(224, 36, 43, .18),
 .pause-list li { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .bomb.frozen .bomb-inner { animation: none !important; }
 .bomb.frozen .spark { display: none; }
+
+/* Lo que escribe el que tiene la bomba, grande, dentro de tu campo (cuando no es tu turno) */
+.word-input .others { position: absolute; inset: 0; padding: 0 120px 0 23px; display: flex; align-items: center; gap: .25em; pointer-events: none;
+  font: 800 30px var(--display); letter-spacing: .02em; text-transform: lowercase; white-space: pre; overflow: hidden; color: var(--ink); }
+.word-input .others .who { text-transform: none; color: var(--muted); font-size: .7em; }
+.word-input .others mark { background: var(--spark); color: var(--ink); border-radius: 6px; padding: 0 2px; }
+.word-input.watching input::placeholder { color: transparent; }
+.word-input.watching input { border-color: var(--violet); box-shadow: 0 5px 0 var(--violet); }
+@media (max-width: 640px) { .word-input .others { font-size: 24px; padding-right: 96px; } }
+
+.version-tag { position: fixed; left: 8px; bottom: 4px; font: 700 11px var(--body); color: var(--muted); opacity: .7; pointer-events: none; z-index: 1; }
+body:has(.game) .version-tag { display: none; }

@@ -50,6 +50,12 @@ describe('diccionario real', () => {
     const tiers = bank.tierLists(3);
     for (const t of tiers) expect(t.length).toBeGreaterThan(50);
     const r = bank.pick({ minutes: 0, minAvailable: 5 });
-    expect(bank.total(r.syllable)).toBeGreaterThanOrEqual(1000);
+    expect(bank.entries.get(r.syllable).f).toBeGreaterThanOrEqual(150);
+    // las sílabas imposibles no salen nunca, ni al final de una partida larga
+    for (let i = 0; i < 2000; i += 1) {
+      const s = bank.pick({ minutes: 15, minAvailable: 5 }).syllable;
+      expect(['uaq', 'cee']).not.toContain(s);
+      expect(bank.entries.get(s).f).toBeGreaterThanOrEqual(15);
+    }
   });
 });

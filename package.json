@@ -1,6 +1,6 @@
 {
   "name": "wortbomb",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "wORTbomb: juego online por salas de pasar la bomba escribiendo palabras en español que contengan una sílaba.",
   "type": "module",
   "main": "server/index.js",

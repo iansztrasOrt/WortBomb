@@ -37,7 +37,18 @@ export function mountGame(app, ctx) {
   });
   const ghost = el('div', { class: 'ghost', 'aria-hidden': 'true' });
   const sendBtn = el('button', { class: 'btn primary send', type: 'submit', text: t('send'), onpointerdown: (e) => e.preventDefault() });
-  const wordBox = el('div', { class: 'word-input' }, input, ghost, sendBtn);
+  // Cuando no es tu turno, acá se ve GRANDE lo que está escribiendo el que tiene la bomba.
+  const others = el('div', { class: 'others', 'aria-live': 'off' });
+  const wordBox = el('div', { class: 'word-input' }, input, ghost, others, sendBtn);
+  function showOthers(name, text, syllable) {
+    others.replaceChildren();
+    if (!text) {
+      wordBox.classList.remove('watching');
+      return;
+    }
+    others.append(el('span', { class: 'who', text: `${name}: ` }), highlight(text, syllable));
+    wordBox.classList.add('watching');
+  }
   const msg = el('div', { class: 'msg-line', role: 'status', 'aria-live': 'polite' });
   const reportBtn = el('button', { class: 'report-link', type: 'button', text: t('report'), onclick: () => openReport(ctx) });
   const form = el('form', { class: 'dock', onsubmit: submit }, wordBox, msg, el('div', { style: { textAlign: 'center' } }, reportBtn));
@@ -85,6 +96,7 @@ export function mountGame(app, ctx) {
     spectators.hidden = !list.length;
   }
   function renderTurnInfo() {
+    showOthers('', '');
     const turn = g().turn;
     const seat = mySeat();
     arena.setSyllable(turn ? turn.syllable : '', { animate: true });
@@ -243,6 +255,8 @@ export function mountGame(app, ctx) {
       const syl = g().turn?.syllable;
       if (playerId === me()) return;
       arena.setLive(text, syl);
+      const who = g().seats.find((s) => s.id === playerId);
+      showOthers(who?.name || '', text, syl);
     },
     accept(ev) {
       arena.showAccepted(ev.playerId, ev.word, ev.syllable);
@@ -255,6 +269,7 @@ export function mountGame(app, ctx) {
       }
     },
     reject(ev) {
+      if (ev.playerId !== me()) showOthers(g().seats.find((s) => s.id === ev.playerId)?.name || '', `✗ ${ev.word}`, g().turn?.syllable);
       if (ev.playerId === me()) showError(ev.message);
       else arena.setLive(`✗ ${ev.word}`, g().turn?.syllable, 'bad');
     },

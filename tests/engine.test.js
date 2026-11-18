@@ -156,8 +156,8 @@ describe('regla: no se repiten palabras en la partida', () => {
 // ---------------------------------------------------------------- sílabas
 describe('sílabas', () => {
   it('nunca sale una sílaba con menos de N palabras sin usar, ni la misma dos veces seguidas', () => {
-    const bank = new SyllableBank([{ s: 'aa', n: 6 }, { s: 'bb', n: 2000 }, { s: 'cc', n: 2000 }]);
-    const used = { containing: (s) => (s === 'aa' ? 2 : 0) }; // a "aa" le quedan 4
+    const bank = new SyllableBank([{ s: 'aa', n: 60, f: 900 }, { s: 'bb', n: 2000, f: 900 }, { s: 'cc', n: 2000, f: 900 }]);
+    const used = { containing: (s) => (s === 'aa' ? 56 : 0) }; // a "aa" le quedan 4
     for (let i = 0; i < 50; i += 1) {
       const r = bank.pick({ minutes: 9, rng: Math.random, used, minAvailable: 5, avoid: 'bb' });
       expect(r.syllable).toBe('cc');
@@ -166,11 +166,11 @@ describe('sílabas', () => {
 
   it('una sílaba que se quedó sin palabras disponibles se reemplaza por otra', () => {
     const words = ['casa', 'masa', 'tasa', 'pasa', 'cosa'];
-    const bank = new SyllableBank([{ s: 'asa', n: 4 }, { s: 'os', n: 1200 }]);
+    const bank = new SyllableBank([{ s: 'asa', n: 52, f: 400 }, { s: 'os', n: 1200, f: 900 }]);
     const used = new UsedWords();
     for (const w of words.slice(0, 2)) used.claim(w);
-    // "asa" tenía 4 y se usaron 2: quedan 2 < 3 → no puede salir
-    for (let i = 0; i < 30; i += 1) expect(bank.pick({ minutes: 20, used, minAvailable: 3 }).syllable).toBe('os');
+    // "asa" tenía 52 y se usaron 2: quedan 50 < 51 → no puede salir
+    for (let i = 0; i < 30; i += 1) expect(bank.pick({ minutes: 20, used, minAvailable: 51 }).syllable).toBe('os');
   });
 
   it('la dificultad sube con el tiempo de partida', () => {
@@ -178,10 +178,12 @@ describe('sílabas', () => {
     const late = tierWeightsAt(10);
     expect(late[3]).toBeGreaterThan(0);
     expect(late[0]).toBeLessThan(1);
-    const bank = new SyllableBank([{ s: 'aa', n: 5000, f: 999 }, { s: 'bb', n: 600 }, { s: 'cc', n: 100 }, { s: 'dd', n: 20 }]);
+    const bank = new SyllableBank([{ s: 'aa', n: 5000, f: 999 }, { s: 'bb', n: 600, f: 100 }, { s: 'cc', n: 300, f: 40 }, { s: 'dd', n: 200, f: 20 }, { s: 'zz', n: 5000, f: 3 }]);
     const tiers = (m) => Array.from({ length: 400 }, () => bank.pick({ minutes: m, minAvailable: 1 }).tier);
     expect(new Set(tiers(0))).toEqual(new Set([0]));
-    expect(new Set(tiers(10)).size).toBe(4);
+    expect(new Set(tiers(12)).size).toBe(4);
+    // una sílaba que casi no aparece en palabras comunes no sale nunca (aunque el diccionario tenga muchas)
+    for (let i = 0; i < 300; i += 1) expect(bank.pick({ minutes: 12, minAvailable: 1 }).syllable).not.toBe('zz');
   });
 
   it('usa el conteo según el largo mínimo de palabra de la sala', () => {
