@@ -46,7 +46,7 @@ export function mountGame(app, ctx) {
       wordBox.classList.remove('watching');
       return;
     }
-    others.append(el('span', { class: 'who', text: `${name}: ` }), highlight(text, syllable));
+    others.append(el('span', { class: 'who', text: `${name}:` }), el('span', { class: 'txt' }, highlight(text, syllable)));
     wordBox.classList.add('watching');
   }
   const msg = el('div', { class: 'msg-line', role: 'status', 'aria-live': 'polite' });
